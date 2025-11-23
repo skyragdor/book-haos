@@ -1,0 +1,27 @@
+name: Daily Grass
+
+on:
+  schedule:
+    - cron: '0 9 * * *'    # щодня о 9:00 ранку за UTC = 11:00–12:00 по Києву
+  workflow_dispatch:       # можна запустити вручну кнопкою
+
+jobs:
+  daily-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create/Update grass file + counter
+        run: |
+          echo "$(date '+%Y-%m-%d %H:%M') — день $(( $(cat counter.txt 2>/dev/null || echo 0) + 1 )) 🌱" >> grass.md
+          echo $(( $(cat counter.txt 2>/dev/null || echo 0) + 1 )) > counter.txt
+
+      - name: Commit & push
+        run: |
+          git config user.name "skyragdor"
+          git config user.email "skyragdor@users.noreply.github.com"
+          git add grass.md counter.txt
+          git commit -m "daily grass $(date '+%Y-%m-%d') 🌿"
+          git push
