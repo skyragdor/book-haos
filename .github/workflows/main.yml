@@ -1,27 +1,47 @@
-name: Daily Grass
+name: Daily Grass (6–10 random commits)
 
 on:
   schedule:
-    - cron: '0 9 * * *'    # щодня о 9:00 ранку за UTC = 11:00–12:00 по Києву
-  workflow_dispatch:       # можна запустити вручну кнопкою
+    - cron: '0 9 * * *'      # щодня о 9:00 UTC → 11:00–12:00 за Києвом
+  workflow_dispatch:
 
 jobs:
-  daily-commit:
+  random-commits:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create/Update grass file + counter
+      - name: 6–10 random commits per day
         run: |
-          echo "$(date '+%Y-%m-%d %H:%M') — день $(( $(cat counter.txt 2>/dev/null || echo 0) + 1 )) 🌱" >> grass.md
-          echo $(( $(cat counter.txt 2>/dev/null || echo 0) + 1 )) > counter.txt
+          # Генеруємо випадкову кількість комітів від 6 до 10
+          COMMITS=$(( RANDOM % 5 + 6 ))
+          echo "Сьогодні буде $COMMITS комітів"
 
-      - name: Commit & push
-        run: |
-          git config user.name "skyragdor"
-          git config user.email "skyragdor@users.noreply.github.com"
-          git add grass.md counter.txt
-          git commit -m "daily grass $(date '+%Y-%m-%d') 🌿"
-          git push
+          for i in $(seq 1 $COMMITS); do
+            # Випадкова затримка 5–45 секунд між комітами
+            sleep $(( RANDOM % 41 + 5 ))
+
+            # Поточний час
+            NOW=$(date '+%Y-%m-%d %H:%M:%S')
+
+            # Збільшуємо лічильник днів (загальний)
+            COUNTER=$(( $(cat counter.txt 2>/dev/null || echo 0) + 1 ))
+            echo $COUNTER > counter.txt
+
+            # Запис у траву
+            echo "$NOW — день $COUNTER (коміт $i з $COMMITS сьогодні) 🌱" >> grass.md
+
+            # Коміт і пуш
+            git config user.name "skyragdor"
+            git config user.email "skyragdor@users.noreply.github.com"
+            git add grass.md counter.txt
+            git commit -m "daily grass $(date '+%Y-%m-%d') #$COUNTER [auto $i/$COMMITS]"
+            git push
+
+            echo "Зроблено коміт $i з $COMMITS"
+          done
+
+          echo "ГОТОВО! Сьогодні зроблено $COMMITS комітів 🌿"
